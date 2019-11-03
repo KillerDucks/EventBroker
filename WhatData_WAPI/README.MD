@@ -1,0 +1,1 @@
+This microservice handles all database related requests and will essentially be an abstraction layer for all other microservice that require a database

@@ -14,6 +14,28 @@ const Cache = new cacheClass({Address: "localhost", Port: 6379}, false, false, t
 //     }
 // ]})
 
-Cache.GetHash(["1", "2"], (data) => {
+// Cache.SetHash({ set: [
+//     {
+//         name: "1",
+//         key: "Example",
+//         value: "Example_Value"
+//     }
+// ]}, (d) => { console.log(`SetHash => ${d}`) });
+
+// Cache.SetHashSingle({
+//     name: "1",
+//     key: "Example",
+//     value: "Example_Value_Single"
+// }, (d) => { console.log(`SetHashSingle => ${d}`) });
+
+// Cache.SetHash({ set: [
+//     {
+//         name: "1",
+//         key: "Example",
+//         value: "Example_Value_Not"
+//     }
+// ]}, () => {});
+
+Cache._GetHashSingle("15", (data) => {
     console.log(data);
 });

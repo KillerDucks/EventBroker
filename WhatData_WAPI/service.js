@@ -3,12 +3,14 @@ const API = express();
 
 // Import Routers
 const db_router = require("./Routes/route_database");
+const cache_router = require("./Routes/route_cache");
 
 // Setup JSON requests
 API.use(express.json());
 
 // Load Routers
 API.use("/v1/database", db_router);
+API.use("/v1/cache", cache_router);
 
 // Handles all non-existent endpoints
 API.use(function (req, res, next) {

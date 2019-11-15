@@ -45,4 +45,6 @@ Format
 Improvements
     - Cache_class.js
         - Improve by implementing a higher level of abstraction
+            + Done via route_store.js
         - Add support for more Redis commands/features
+            + Moved to a future revision

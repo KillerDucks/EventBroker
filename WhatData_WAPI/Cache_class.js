@@ -27,7 +27,7 @@ class Cache {
 
         _connection(client);
 
-        client.quit(() => { console.log("Closed"); });
+        client.quit(() => { /*console.log("Closed");**/ });
     }
 
     _SetEnvironment()
@@ -45,22 +45,62 @@ class Cache {
             for (let i = 0; i < data.set.length; i++) {                
                 exec.hset(data.set[i].name, data.set[i].key, data.set[i].value, (err, resp) => {
                     if(err){
-                        console.error(err);
-                    }
-                    console.log(resp);
+                        throw err;
+                    }                
+                    res(resp);
                 });
             }
         });
     }
 
+    SetHashSingle(data, res = {})
+    {
+        this._CacheExecutor((exec) => {           
+            exec.hset(data.name, data.key, data.value, (err, resp) => {
+                if(err){
+                    throw err;
+                }                
+                res(resp);
+            });
+        });
+    }
+
+
     GetHash(data, res = {})
     {
         this._CacheExecutor((exec) => {     
             for (let i = 0; i < data.length; i++) {         
-                exec.hkeys(data[i], function (err, replies) {
+                exec.hgetall(data[i], function (err, replies) {
+                    if(err){
+                        throw err;
+                    }     
                     res(replies);
                 });
             }
+        });
+    }
+
+    _GetHashSingle(id, res = {})
+    {
+        this._CacheExecutor((exec) => {            
+            exec.hgetall(id, function (err, data) {
+                if(err){
+                    throw err;
+                }     
+                res(data);
+            });
+        });
+    }
+
+    _HashExist(id, res = {})
+    {
+        this._CacheExecutor((exec) => {            
+            exec.hkeys(id, function (err, data) {
+                if(err){
+                    throw err;
+                }     
+                (data) ? res(1) : res(0);
+            });
         });
     }
 

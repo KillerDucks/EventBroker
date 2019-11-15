@@ -24,30 +24,37 @@ router.use(function timeLog (req, res, next) {
     // Prints a timestamp on a request.
     console.log('Time: ', Date.now());
 
+    // Get the JWT Token from the Header
+    let sToken = req.header("authorization");
+
     // Check the Request security
-    if(!req.body.Security)
+    if(!sToken)
     {
         utils.Return_Error_Msg(res, {
             "Code": 403,
-            "Message": "Request has no Security description."
+            "Message": "Request does not contain a valid Authorization header."
         });
     }
     else
     {
-        // Verify the authenticity 
-        if(!utils.Check_Security(req.body.Security))
-        {
-            // Return with invalid Key error message
-            utils.Return_Error_Msg(res, {
-                "Code": 403,
-                "Message": "Request has an invalid Security Key."
-            }); 
-        }
-        else
-        {
-            // Releases the traffic
-            next();
-        }
+        utils.Check_Security(sToken, (valid) => {
+            if(valid)
+            {
+                // Token is Valid
+
+                // Release Traffic
+                next();
+            }
+            else
+            {
+                // Not Valid
+                // Return with invalid Key error message
+                utils.Return_Error_Msg(res, {
+                    "Code": 403,
+                    "Message": "Request has an invalid Authorization Token."
+                }); 
+            }
+        })
     }    
 });
 

@@ -1,0 +1,12 @@
+{
+  "name": "event_broker",
+  "version": "1.0.0",
+  "description": "A really simple way of send/recv events",
+  "main": "src/service.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/service.js"
+  },
+  "author": "KillerDucks",
+  "license": "MIT"
+}

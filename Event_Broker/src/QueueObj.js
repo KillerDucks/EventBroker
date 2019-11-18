@@ -36,22 +36,34 @@ class Queue
 
     Pop()
     {
-        this._Stack.pop();
+        if(!this._Stack.length == 0)
+        {
+            this._Stack.pop();
+            return true;
+        }
+        return false;
     }
 
     Remove(index)
     {
-        this._Stack.splice(index, 1);
+        if(!this._Stack.length == 0)
+        {
+            this._Stack.splice(index, 1);
+            return true;
+        }
+        return false;
     }
 };
 
-class QueueHandler
+class SocketQueue extends Queue
 {
-    constructor()
+    constructor(_Config = {})
     {
+        // Superman
+        super(_Config);
         // Set up Handler
-        this._
     }
+
 };
 
-module.exports = { Queue, QueueHandler };
+module.exports = { Queue, SocketQueue };

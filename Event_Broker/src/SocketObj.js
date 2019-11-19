@@ -21,7 +21,7 @@ class AdvSocket
             }
         };
         // Create a new Queue to handle the messages
-        this._Queue = Queue({MaxQueueSize: this._Config.Queue.size});
+        this._Queue = new Queue.Queue({MaxQueueSize: this._Config.Queue.size});
         // Changes the socket encoding to utf8
         this._Socket.setEncoding("utf8");
     }
@@ -70,12 +70,23 @@ class AdvSocket
     }
 
     // [External Function] This function will handle the Queue of messages
+    Push(data)
+    {
+        // console.log(`Adding [${data}] to the Queue`);
+        this._Queue.Push(data);
+        // console.log(`Current Queue => [${this._Queue._Stack}]`);
+    }
 
     // [External Function] This will Write to the Socket with any given data
     Write(data)
     {
         if(!this._SocketValid())
         {
+            return false;
+        }
+        if(data == false)
+        {
+            // False data check
             return false;
         }
         // Convert the data into a streamable piece of data
@@ -93,7 +104,27 @@ class AdvSocket
         {
             this._Socket.write(data);
         }
+        // console.log(data);
         return true;
+    }
+
+    // [DEBUG]
+    _TimeoutWrite()
+    {
+        if(!this._SocketValid())
+        {
+            // console.log(`No Socket => [${this._SocketValid()}]`);
+            return false;
+        }
+
+        if(this._Queue.Length() == 0)
+        {
+            // console.log(`No Queue => [${this._Queue.Length()}]`);
+            // console.log(`No Queue => [${this._Queue._Stack}]`);
+            return false;
+        }
+
+        this.Write(this._Queue.Pop());
     }
 
 }

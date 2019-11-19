@@ -10,7 +10,7 @@ class Queue
 
     _MaxStackCheck()
     {
-        if(this._Stack.length <= this._MaxStackSize)
+        if(this._Stack.length >= this._MaxStackSize)
         {
             // Stack is bigger/equal to the max size
             // Clear the Stack
@@ -22,6 +22,11 @@ class Queue
     {
         return this._Stack.length;
     }
+
+    // Stack()
+    // {
+    //     return this._Stack;
+    // }
 
     Clear()
     {
@@ -38,8 +43,7 @@ class Queue
     {
         if(!this._Stack.length == 0)
         {
-            this._Stack.pop();
-            return true;
+            return this._Stack.pop();
         }
         return false;
     }

@@ -24,6 +24,9 @@ class AdvSocket
         this._Queue = new Queue.Queue({MaxQueueSize: this._Config.Queue.size});
         // Changes the socket encoding to utf8
         this._Socket.setEncoding("utf8");
+        // For use to manage multiple Sockets
+        this._UUID = "";
+        this._FriendlyName = "";
     }
 
     // [Internal Function] This function will Queue to a Cache Server (like Redis) to store the Queue

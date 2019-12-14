@@ -29,16 +29,37 @@ class SimpleSocks
         }    
     }
 
+    // [Internal Event Handler]
+    _PublishEvent(data)
+    {
+
+    }
+
+    // [Internal Event Handler]
+    _SubscribeEvent(data)
+    {
+        console.log(`Event Data: [${data}]`);
+    }
+
     // [External Function] Add a new socket to the Manager
     Add(_Socket, Name = "Std_Socket")
     {
+        // Set UUID + Name
         _Socket._UUID = this._UUID();
         _Socket._FriendlyName = Name;
+        // Register the Sockets Sub/Pub Proxy Events
+        _Socket.on("publish", this._PublishEvent.bind(this));
+        _Socket.on("subscribe", this._SubscribeEvent.bind(this));
+        _Socket.Write(JSON.stringify({Status: 400, Msg: "Example"}));
+        // Add Socket to the Array
         this._Sockets.push(_Socket);
+        // [DEBUG]
+        console.log(`Added new Socket Connection [${_Socket._UUID}]`);
+        // Return the Sockets new UUID
         return _Socket._UUID;
     }
 
-    // [External Function] This will Broadcast a Message to all avaliable sockets [TODO] Look into Async functions
+    // [External Function] This will Broadcast a Message to all available sockets [TODO] Look into Async functions
     Broadcast(data)
     {
         // Vars
@@ -56,7 +77,7 @@ class SimpleSocks
         }
         else
         {
-            // [TODO] Add some sort of return that will show the unscuessful sockets
+            // [TODO] Add some sort of return that will show the unsuccessful sockets
             return false;
         }
     }

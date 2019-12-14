@@ -1,14 +1,16 @@
 // This Class is a simple wrapper class that contains a `socket` object with some specific additional features.
 
 const net = require('net');
-const EventEmitter = require('events');
+const EventEmitter = require('events').EventEmitter;
 
 const Queue = require("./QueueObj");
 
-class AdvSocket
+class AdvSocket extends EventEmitter
 {
     constructor(_Socket = net.Socket, _CacheConnection = undefined)
     {
+        // super
+        super();
         // Store the Socket in `this`
         (_Socket) ? this._Socket = _Socket : this._Socket = undefined;
         // Store the Cache Connection (if any) in `this`
@@ -27,6 +29,12 @@ class AdvSocket
         // For use to manage multiple Sockets
         this._UUID = "";
         this._FriendlyName = "";
+        // Events Proxy
+        this._Event = new EventEmitter();
+        // Setup Proxy Event [TODO] [DEBUG]
+        // this._Event.on("subscribe", this._eSubscribe.bind(this));
+        // Subscriptions
+        this._Subscriptions = [];
     }
 
     // [Internal Function] This function will Queue to a Cache Server (like Redis) to store the Queue
@@ -128,6 +136,70 @@ class AdvSocket
         }
 
         this.Write(this._Queue.Pop());
+    }
+
+    // [Internal Event Handler]
+    _eProxy()
+    {
+
+    }
+
+    // [Internal Event Handler] Event: "subscribe"
+    _eSubscribe(newEvent)
+    {
+        // Check if newEvent is valid string
+        if(typeof(newEvent) == "string")
+        {
+            // [DEBUG]
+            console.log(`New Event Subscription [${newEvent}]`);
+        }
+    }
+
+
+    // [Internal Event Handler] Event: "data"
+    _Data(_SocketData)
+    {
+        // Check for Line Terminators
+        let msg = _SocketData.split('\n');
+        // Handle Incoming Messages
+        msg.forEach(m => {
+           this._DataParser(m);
+        });
+    }
+
+    // 
+    _DataParser(data)
+    {
+        try {
+            let e = JSON.parse(data);
+            if(e.Status == 200 && e.Subscribe)
+            {
+                // Subscribe the Client to the chosen Events
+                if(typeof(e.Subscribe.Events) == "object")
+                {
+                    // There is more than one event to subscribe to
+                    e.Subscribe.Events.forEach(event => {
+                        this._Subscriptions.push(event);
+                        this._Event.emit("subscribe", event);
+                    });
+                }
+                else
+                {
+                    this._Subscriptions.push(e.Subscribe.Events);
+                    this._Event.emit("subscribe", e.Subscribe.Events);
+                }
+            }
+            else
+            {
+                console.log(`Client Message => [${e.Msg}]`);
+            }
+        } catch (error) {
+            console.error(error);
+            console.log(`\n\n\nError`)
+            console.log(data);
+            console.log(`Error\n\n\n`)
+            process.exit(1);
+        }
     }
 
 }

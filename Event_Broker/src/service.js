@@ -2,6 +2,9 @@
 
 const tcp = require('net');
 const SocketExample = require("./SocketObj");
+const SocketHandler = require("./SocketHandler").SimpleSocks;
+
+const SockHandler = new SocketHandler();
 
 const tcpServer = tcp.createServer()  .on('connection', ConnectionHandler.bind(this))
                                       .on("close", ConnectionCloseHandler.bind(this))
@@ -14,6 +17,9 @@ function ConnectionHandler(socket)
 {
     // Create Socket Object
     const x = new SocketExample.AdvSocket(socket);
+    socket.on("data", x._Data.bind(x));
+    SockHandler.Add(x);
+    x.Push({Status: 200, Msg: "Please subscribe to Events"})
     setInterval(x._TimeoutWrite.bind(x), 1000);
     // socket.close();
 }

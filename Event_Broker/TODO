@@ -1,0 +1,6 @@
+[] Implement an Event Log
+    [] Overall Event Log
+    [] Topic Specific Event Log
+    [] Event Processed Status
+    
+[] Implement Caching of Socket Meta Data to allow scaling for more sockets

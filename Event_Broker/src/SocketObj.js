@@ -3,6 +3,9 @@
 const net = require('net');
 const EventEmitter = require('events').EventEmitter;
 
+const Structures = require("./Structures/Structs");
+const EventS     = Structures.Event_S;
+
 const Queue = require("./QueueObj");
 
 class AdvSocket extends EventEmitter
@@ -31,10 +34,27 @@ class AdvSocket extends EventEmitter
         this._FriendlyName = "";
         // Events Proxy
         this._Event = new EventEmitter();
-        // Setup Proxy Event [TODO] [DEBUG]
-        // this._Event.on("subscribe", this._eSubscribe.bind(this));
         // Subscriptions
         this._Subscriptions = [];
+        // Bind the General Socket events
+        _Socket.on("data", this._Data.bind(this));
+        // _Socket.on("close", this._IH_Socket_Close.bind(this)); [Debug]
+        // [TODO][Debug] Sink these events for now
+        // _Socket.on("error", this._IH_Socket_Close.bind(this)); [Debug]
+        _Socket.on("end", this._IH_Socket_Close.bind(this));
+        // Heartbeats
+        this._HeartBeat = new Queue.Queue({MaxQueueSize: this._Config.Queue.size, _ForcePopOnMax: true});
+    }
+
+    // [Internal Handler] Handles Socket Event `Close`
+    _IH_Socket_Close()
+    {
+        // Prevent any more writes to the socket
+        this._Socket = undefined;
+        // Emit a socked fatality event
+        this._Event.emit("fatal", (this._UUID != "") ? this._UUID : "Socket has been terminated");
+        // [Debug]
+        console.info("[Socket] Socket Connection has terminated")
     }
 
     // [Internal Function] This function will Queue to a Cache Server (like Redis) to store the Queue
@@ -46,6 +66,9 @@ class AdvSocket extends EventEmitter
     // [Internal Function] This function will Queue to a Cache Server (like Redis) to store the Queue
     _SocketValid()
     {
+        // Heartbeat check
+        this._HeartBeat_Checker();
+        // Socket Check
         if(this._Socket == undefined || this._Socket.destroyed)
         {
             return false;
@@ -163,35 +186,61 @@ class AdvSocket extends EventEmitter
         let msg = _SocketData.split('\n');
         // Handle Incoming Messages
         msg.forEach(m => {
-           this._DataParser(m);
+            // Check for empty elements
+            if(m == "")
+            {
+                return;
+            }
+            else
+            {
+                // Parse the data
+                this._DataParser(m);
+            }
         });
     }
 
-    // 
+    // [Internal Function] Parses incoming data
     _DataParser(data)
     {
         try {
             let e = JSON.parse(data);
             if(e.Status == 200 && e.Subscribe)
             {
-                // Subscribe the Client to the chosen Events
+                // Subscribe the Client to the chosen Events [TODO] Why is this here ???
                 if(typeof(e.Subscribe.Events) == "object")
                 {
                     // There is more than one event to subscribe to
                     e.Subscribe.Events.forEach(event => {
                         this._Subscriptions.push(event);
-                        this._Event.emit("subscribe", event);
+                        this._Event.emit("subscribe", subEvent.Event);
                     });
                 }
                 else
                 {
                     this._Subscriptions.push(e.Subscribe.Events);
-                    this._Event.emit("subscribe", e.Subscribe.Events);
+                    e.SockID = this._UUID;
+                    this._Event.emit("subscribe", e);
                 }
+            }
+            else if(e.Status == 200 && e.Publish)
+            {
+                // Emit the Publish Event
+                e.SockID = this._UUID;
+                this._Event.emit("publish", e);
             }
             else
             {
-                console.log(`Client Message => [${e.Msg}]`);
+                if(e.Msg == "PULSE")
+                {
+                    // Handle the Heartbeat
+                    this._Event.emit("heartbeat");
+                    // Handle the heartbeat internally
+                    this._IH_Heartbeat_Pulse();
+                }
+                else
+                {
+                    console.log(`Client Message => [${e.Msg}]`);
+                }
             }
         } catch (error) {
             console.error(error);
@@ -202,6 +251,29 @@ class AdvSocket extends EventEmitter
         }
     }
 
+    // [Internal Handler] Handles Heartbeats Incoming Pulses
+    _IH_Heartbeat_Pulse()
+    {
+        // Push the current timestamp on the stack
+        this._HeartBeat.Push(Date.now());
+    }
+
+    // [Internal Handler] Checks if the socket has sent a heartbeat in the needed time
+    _HeartBeat_Checker()
+    {
+        // Calculate the previous pulse intervals
+        let ts1 = this._HeartBeat._Stack[0];
+        let ts2 = this._HeartBeat._Stack[1];
+        let interval = ts2 - ts1;
+        let tsNow = Date.now() - this._HeartBeat._Stack[-1];
+        if(tsNow > interval)
+        {
+            // The socket is most likely dead, purge the socket and prevent any further writes
+            this._Socket = undefined;
+            // Emit a socked fatality event
+            this._Event.emit("fatal", "FATAL: Heartbeat failure !!!");
+        }
+    }
 }
 
 // Exports

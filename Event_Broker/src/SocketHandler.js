@@ -1,3 +1,6 @@
+const Structures = require("./Structures/Structs");
+const EventS     = Structures.Event_S;
+
 class SimpleSocks
 {
     constructor()
@@ -9,7 +12,7 @@ class SimpleSocks
     // [Internal Function] Creates UUID's
     _UUID() 
     {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        return 'Sock-xyxxx-xxxxxx'.replace(/[xy]/g, function(c) {
             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
@@ -29,16 +32,64 @@ class SimpleSocks
         }    
     }
 
+    // [Internal Function] Get a socket via UUID
+    _GetSocket(UUID)
+    {
+        const index = this._Sockets.findIndex(s => s._UUID == UUID);
+        if(index != -1)
+        {
+            return this._Sockets[index];
+        }
+        else
+        {
+            return false;
+        }   
+    }
+
     // [Internal Event Handler]
     _PublishEvent(data)
     {
+        // Assume data is a Event type object
 
+        // console.info("Hit Publish Event")
+        // console.info(`Event Published => ${data.Publish.Events}`)
+
+        // Search Sockets to see if they are subbed to this event
+        let subSocks = [];
+        this._Sockets.forEach(sock => {
+
+            // console.log(`${sock._UUID} => ${sock._Subscriptions}`)
+
+            sock._Subscriptions.forEach(sub => {
+                // console.log(`${sock._UUID} -> Loop Subs -> ${sub}`)
+                if(sub == data.Publish.Events)
+                {
+                    subSocks.push(sock);
+                    return;
+                }
+            });
+        });
+        // // Publish Event to the subbed sockets
+        subSocks.forEach(s => {
+            console.log(s._UUID)
+            s.Push(data.Publish.Data);
+        });
     }
 
     // [Internal Event Handler]
     _SubscribeEvent(data)
     {
-        console.log(`Event Data: [${data}]`);
+        // // Check for objects
+        // if(typeof(data) == "object")
+        // {
+        //     // data = JSON.stringify(data);
+        //     if(data.SockID)
+        //     {
+        //         console.info(this._GetSocket(data.SockID)._Subscriptions);
+        //     }
+        // }
+        // [Debug]
+        console.info(`Socket [${data.SockID}] has subscribed to [${data.Subscribe.Events}]`);
     }
 
     // [External Function] Add a new socket to the Manager
@@ -48,8 +99,11 @@ class SimpleSocks
         _Socket._UUID = this._UUID();
         _Socket._FriendlyName = Name;
         // Register the Sockets Sub/Pub Proxy Events
-        _Socket.on("publish", this._PublishEvent.bind(this));
-        _Socket.on("subscribe", this._SubscribeEvent.bind(this));
+        _Socket._Event.on("publish", this._PublishEvent.bind(this));
+        _Socket._Event.on("subscribe", this._SubscribeEvent.bind(this));
+        // Handle Socket Death
+        _Socket._Event.on("fatal", this._SockDeath.bind(this));
+        // [DEBUG]
         _Socket.Write(JSON.stringify({Status: 400, Msg: "Example"}));
         // Add Socket to the Array
         this._Sockets.push(_Socket);
@@ -123,6 +177,21 @@ class SimpleSocks
             return true;
         }
     }
+
+    // [Internal Function] Handle Death of a Socket
+    _SockDeath(meta)
+    {
+        // [TODO] Remove the Socket from the pool
+        if(meta)
+        {
+            console.log(`Socket [${meta}] has Died`);
+        }
+        else
+        {
+            console.log("Socket has Died");
+        }
+    }
+
 };
 
 // Exports

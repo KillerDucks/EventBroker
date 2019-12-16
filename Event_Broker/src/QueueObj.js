@@ -3,6 +3,7 @@ class Queue
     constructor(_Config = {})
     {
         this._MaxStackSize = _Config.MaxQueueSize;
+        (_Config.ForcePopOnMax) ? this._ForcePopOnMax = true : this._ForcePopOnMax = false;
 
         // Init a new Stack
         this._Stack = [];
@@ -13,8 +14,15 @@ class Queue
         if(this._Stack.length >= this._MaxStackSize)
         {
             // Stack is bigger/equal to the max size
-            // Clear the Stack
-            this.Clear();
+            if(this._ForcePopOnMax)
+            {
+                this.Pop();
+            }
+            else
+            {
+                // Clear the Stack
+                this.Clear();
+            }
         }
     }
 
